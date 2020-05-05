@@ -11,8 +11,8 @@ var authenticationMiddleware = require('../middlewares/autenticacion');
 
 // Schemas
 var usuarioSchema = require('../models/usuario');
-var medicoSchema = require('../models/medico');
-var hospitalSchema = require('../models/hospital');
+var productoSchema = require('../models/producto');
+var itemSchema = require('../models/item');
 
 var app = express();
 app.use(fileUpload());
@@ -31,7 +31,7 @@ app.put('/:type/:type_id', authenticationMiddleware.verificaToken, (request, res
     var resourceType = request.params.type;
     var resourceId = request.params.type_id;
 
-    var availableTypes = ['usuarios', 'medicos', 'hospitales'];
+    var availableTypes = ['usuarios', 'items', 'productos'];
 
     if (availableTypes.indexOf(resourceType) < 0) {
         return response.status(400).json({
@@ -45,7 +45,7 @@ app.put('/:type/:type_id', authenticationMiddleware.verificaToken, (request, res
     findResource(resourceType, resourceId)
         .then(schemaResponse => {
 
-            // Data property has the schema object. It could be medics, hospitals or users
+            // Data property has the schema object. It could be items, productos or users
             if (!schemaResponse.data) {
                 return response.status(400).json({
                     success: false,
@@ -111,6 +111,7 @@ app.put('/:type/:type_id', authenticationMiddleware.verificaToken, (request, res
                 }
 
                 schemaResponse.data.img = fileName;
+                var temp=schemaResponse.data;
                 schemaResponse.data.save((error, next) => {
 
                     if (error) {
@@ -123,7 +124,10 @@ app.put('/:type/:type_id', authenticationMiddleware.verificaToken, (request, res
 
                     return response.status(200).json({
                         success: true,
-                        message: 'Archivo subido correctamente'
+                        message: 'Archivo subido correctamente',
+                        schemaResponse:schemaResponse
+
+
                     });
                 });
 
@@ -140,7 +144,7 @@ app.put('/:type/:type_id', authenticationMiddleware.verificaToken, (request, res
 });
 
 /**
- * Find any resource given the type. It could be medics, users or hospitals
+ * Find any resource given the type. It could be medics, items or productos
  * @param  {} resource_type
  * @param  {} resource_id
  */
@@ -157,12 +161,12 @@ function findResource(resource_type, resource_id) {
             schema = usuarioSchema;
             break;
 
-        case 'medicos':
-            schema = medicoSchema;
+        case 'items':
+            schema = itemSchema;
             break;
 
-        case 'hospitales':
-            schema = hospitalSchema;
+        case 'productos':
+            schema = productoSchema;
             break;
     }
 

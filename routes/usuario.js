@@ -2,6 +2,7 @@ var express = require('express');
 var bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken')
 var mdAutenticacion = require('../middlewares/autenticacion');
+var SEED = require('../config/config').SEED;
 
 var app = express();
 
@@ -41,6 +42,131 @@ app.get('/', (req, response, next) => {
             })
 });
 
+
+
+//=====================================================
+//OBTENER  USUARIOS POR ROLE
+//=====================================================
+
+function buscarAutor(busqueda, regex) {
+
+    return new Promise((resolve, reject) => {
+        Usuario.find({}, 'nombre email role img  ')
+            .or([{ 'role': regex }])
+            .exec((err, usuarios) => {
+                if (err) {
+                    reject('Error al cargar usuarios', err)
+                } else {
+                    resolve(usuarios)
+                }
+            })
+    })
+}
+//=====================================================
+//OBTENER DATOS USUARIO POR TOKEN
+//=====================================================
+
+app.get('/obt/', mdAutenticacion.verificaToken, (req, response, next) => {
+
+    var token = req.query.token;
+    var nombre;
+    var role;
+    var email;
+    var img;
+
+    jwt.verify(token, SEED, (err, decoded) => {
+
+        if (err) {
+            return res.status(401).json({
+                ok: false,
+                mensaje: 'Token incorrecto',
+                errors: err
+            })
+        }
+        response.status(200).json({
+            ok: true,
+            // decoded: decoded,
+            usuario:decoded.usuario,
+            
+
+        })
+    });
+
+});
+
+//=====================================================
+//OBTENER DATOS USUARIO POR ID
+//=====================================================
+
+
+app.get('/ob/', (req, res, next) => {
+    var id = req.body.id;
+
+
+    Usuario.findById( id, (err, usuario) => {
+
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                mensaje: 'Error al buscar usuario',
+                errors: err
+            });
+        }
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'El usuario con el id ' + id + ' no existe',
+                errors: { message: 'No existe un usuario con ese id' }
+            });
+        }
+        usuario.password = ':)';
+        res.status(200).json({
+            ok: true,
+            usuario: usuario,
+
+        })
+
+    })
+
+});
+
+//=====================================================
+//OBTENER DATOS USUARIO POR ID
+//=====================================================
+
+
+app.get('/usr/:usr', (req, res, next) => {
+    var usr = req.params.usr;
+
+
+    Usuario.find( {nombre:usr}, (err, usuario) => {
+
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                mensaje: 'Error al buscar usuario',
+                errors: err
+            });
+        }
+
+        if (!usuario) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'El usuario con el id ' + id + ' no existe',
+                errors: { message: 'No existe un usuario con ese id' }
+            });
+        }
+        usuario.password = ':)';
+        res.status(200).json({
+            ok: true,
+            usuario: usuario,
+
+        })
+
+    })
+
+});
 //=====================================================
 //ACTUALIZAR USUARIOS
 //=====================================================
@@ -94,7 +220,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
 //=====================================================
 //CREAR UN NUEVO USUARIO
 //=====================================================
-app.post('/', mdAutenticacion.verificaToken, (req, res) => {
+app.post('/', (req, res) => {
 
     var body = req.body;
 
